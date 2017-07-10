@@ -18,6 +18,11 @@ package com.emjei.opengles20;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -32,9 +37,13 @@ import android.util.Log;
  *   <li>{@link android.opengl.GLSurfaceView.Renderer#onSurfaceChanged}</li>
  * </ul>
  */
-public class MyGLRenderer implements GLSurfaceView.Renderer {
+public class MyGLRenderer implements GLSurfaceView.Renderer, SensorEventListener {
 
     private static final String TAG = "MyGLRenderer";
+
+    private Context mContext;
+    private SensorManager mSensorManager;
+    private Sensor mGameRotationVectorSensor;
     private Triangle mTriangle;
     private Square   mSquare;
 
@@ -45,6 +54,13 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
     private final float[] mRotationMatrix = new float[16];
 
     private float mAngle;
+
+    public MyGLRenderer(Context context) {
+        mContext = context;
+
+        mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
+        mGameRotationVectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
+    }
 
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
@@ -64,10 +80,30 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         // Set the camera position (View matrix)
-        Matrix.setLookAtM(mViewMatrix, 0, 0, 0, -3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+        float result[] = new float[4];
+        float vector[] = { 0f, 0f, 3f, 1f };
+        Matrix.multiplyMV(result, 0, mRotationMatrix, 0, vector, 0);
+        Matrix.setLookAtM(mViewMatrix, 0, 0, 0, 0, result[0], result[1], result[2], 0f, 1.0f, 0.0f);
+//        for (int i = 0; i < mViewMatrix.length; i++) {
+//            Log.v("TAag view", "" + i + ": " + mViewMatrix[i]);
+//        }
 
         // Calculate the projection and view transformation
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0);
+//        for (int i = 0; i < mProjectionMatrix.length; i++) {
+//            Log.v("TAag", "" + i + ": " + mProjectionMatrix[i]);
+//        }
+//
+//        for (int i = 0; i < mMVPMatrix.length; i++) {
+//            Log.v("TAag mvp", "" + i + ": " + mMVPMatrix[i]);
+//        }
+
+//        float[] mVR = new float[4];
+//        float mV[] = { 0.5f, -0.311004243f, 0.0f, 1.f };
+//        Matrix.multiplyMV(mVR, 0, mMVPMatrix, 0, mV, 0);
+//        for (int i = 0; i < mVR.length; ++i) {
+//            Log.v("TAag vector", "" + i + ": " + mVR[i]);
+//        }
 
         // Draw square
 //        mSquare.draw(mMVPMatrix);
@@ -79,15 +115,16 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         // long time = SystemClock.uptimeMillis() % 4000L;
         // float angle = 0.090f * ((int) time);
 
-        Matrix.setRotateM(mRotationMatrix, 0, mAngle, 0, 0, 1.0f);
+//        Matrix.setRotateM(mRotationMatrix, 0, mAngle, 0, 0, 1.0f);
 
         // Combine the rotation matrix with the projection and camera view
         // Note that the mMVPMatrix factor *must be first* in order
         // for the matrix multiplication product to be correct.
-        Matrix.multiplyMM(scratch, 0, mMVPMatrix, 0, mRotationMatrix, 0);
+//        Matrix.multiplyMM(scratch, 0, mMVPMatrix, 0, mRotationMatrix, 0);
 
         // Draw triangle
-        mTriangle.draw(scratch);
+//        Matrix.multiplyMM(scratch, 0, mMVPMatrix, 0, mRotationMatrix, 0);
+        mTriangle.draw(mMVPMatrix);
     }
 
     @Override
@@ -100,8 +137,29 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
 
         // this projection matrix is applied to object coordinates
         // in the onDrawFrame() method
+        Log.v("Taaag", "ratio: " + ratio);
         Matrix.frustumM(mProjectionMatrix, 0, -ratio, ratio, -1, 1, 3, 7);
 
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {}
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+//        Log.v(TAG, "onSensorChanged");
+
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
+            SensorManager.getRotationMatrixFromVector(mRotationMatrix , sensorEvent.values);
+        }
+    }
+
+    void start() {
+        mSensorManager.registerListener(this, mGameRotationVectorSensor, SensorManager.SENSOR_DELAY_GAME);
+    }
+
+    void stop() {
+        mSensorManager.unregisterListener(this);
     }
 
     /**

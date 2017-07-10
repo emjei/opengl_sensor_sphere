@@ -35,11 +35,11 @@ public class MyGLSurfaceView extends GLSurfaceView {
         setEGLContextClientVersion(2);
 
         // Set the Renderer for drawing on the GLSurfaceView
-        mRenderer = new MyGLRenderer();
+        mRenderer = new MyGLRenderer(getContext());
         setRenderer(mRenderer);
 
         // Render the view only when there is a change in the drawing data
-        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+//        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
     private final float TOUCH_SCALE_FACTOR = 180.0f / 320;
@@ -74,7 +74,7 @@ public class MyGLSurfaceView extends GLSurfaceView {
                 mRenderer.setAngle(
                         mRenderer.getAngle() +
                         ((dx + dy) * TOUCH_SCALE_FACTOR));  // = 180.0f / 320
-                requestRender();
+//                requestRender();
         }
 
         mPreviousX = x;
@@ -82,4 +82,11 @@ public class MyGLSurfaceView extends GLSurfaceView {
         return true;
     }
 
+    public void start() {
+        mRenderer.start();
+    }
+
+    public void stop() {
+        mRenderer.stop();
+    }
 }

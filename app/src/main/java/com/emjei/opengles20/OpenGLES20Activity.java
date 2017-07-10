@@ -21,7 +21,7 @@ import android.os.Bundle;
 
 public class OpenGLES20Activity extends Activity {
 
-    private GLSurfaceView mGLView;
+    private MyGLSurfaceView mGLView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -41,6 +41,7 @@ public class OpenGLES20Activity extends Activity {
         // you should consider de-allocating objects that
         // consume significant memory here.
         mGLView.onPause();
+        mGLView.stop();
     }
 
     @Override
@@ -50,5 +51,6 @@ public class OpenGLES20Activity extends Activity {
         // If you de-allocated graphic objects for onPause()
         // this is a good place to re-allocate them.
         mGLView.onResume();
+        mGLView.start();
     }
 }
