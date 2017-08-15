@@ -1,4 +1,4 @@
-package com.emjei.opengles20;
+package com.emjei.opengl_sensor_sphere;
 
 import org.junit.Test;
 
